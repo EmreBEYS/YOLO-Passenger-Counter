@@ -1,22 +1,32 @@
+# Private collected videos/images - DO NOT COMMIT
+data/private/
 
-dataset/
-datasets/
-videos/
-raw/
-runs/
-weights/
-models/
-
+# Raw videos and images
 *.mp4
-*.avi
 *.mov
+*.avi
 *.mkv
 
+# Optional: generated logs
+logs/
+*.log
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# IDE
+.vscode/
+.idea/
+
+# Model weights
+models/
 *.pt
 *.onnx
 *.engine
 
-__pycache__/
-.venv/
-.env
+# OS
 .DS_Store
+Thumbs.db

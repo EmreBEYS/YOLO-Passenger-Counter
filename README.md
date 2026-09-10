@@ -1,93 +1,207 @@
 # YOLO Passenger Counter
 
-A YOLO-based passenger counting and decision support system for public transportation and crowded environments.
+YOLO Passenger Counter is a lightweight computer vision demo project for detecting and counting passengers from local video or camera input.
 
-This project aims to detect people in images or videos, estimate passenger density, and generate simple decision-support outputs based on the detected passenger count.
+The project uses a YOLO-based object detection model to detect people in video frames and logs passenger count information into a CSV file. It is designed as an academic/demo project and can be extended with tracking, entry-exit line counting, dashboard visualization, and real-time camera support.
 
-## Purpose
+## Features
 
-The main goals of this project are to:
+- YOLO-based person detection
+- Local video input support
+- Basic passenger counting
+- CSV event logging
+- Simple Python project structure
+- Privacy-first dataset handling
+- Extendable architecture for future tracking and dashboard features
 
-- Detect passengers and people using YOLO
-- Count people in images and video streams
-- Analyze crowd density
-- Generate basic decision-support outputs
-- Provide anonymized demo screenshots for documentation
+## Current Status
 
-Example outputs:
+This repository currently contains the early V1 demo structure.
 
-```text
-Detected Passengers: 18
-Density Level: NORMAL
-Decision: No additional vehicle required
-```
+Completed:
 
-```text
-Detected Passengers: 47
-Density Level: CRITICAL
-Decision: Additional vehicle recommended
-```
+- Project folder structure
+- Privacy-focused data layout
+- Basic passenger counter logic
+- CSV event logger
+- YOLO detector base
+- Video worker integration draft
 
-## Planned Features
+In Progress:
 
-- Person detection with YOLO
-- Image- and video-based passenger counting
-- Region-based density analysis
-- Entry and exit counting
-- A simple decision engine
-- Blurred and anonymized demo screenshots
-- Basic reporting
+- Video worker test
+- GUI integration with Tkinter
+
+Planned:
+
+- Real-time camera mode
+- Entry/exit line counting
+- Object tracking
+- Dashboard charts
+- Demo screenshots with anonymized faces
 
 ## Project Structure
 
 ```text
 YOLO-Passenger-Counter/
-├── src/
-│   ├── detector/
-│   ├── tracker/
-│   ├── counter/
-│   ├── decision/
-│   └── app.py
 ├── configs/
+├── data/
+│   └── private/
+│       ├── videos/
+│       └── images/
+├── demo/
 ├── docs/
 │   └── screenshots/
-├── demo/
+├── logs/
+├── passenger_counter/
+│   ├── __init__.py
+│   ├── counter.py
+│   ├── detector.py
+│   ├── event_logger.py
+│   └── video_worker.py
 ├── scripts/
+├── app.py
+├── config.py
+├── README.md
 ├── requirements.txt
-├── .gitignore
-└── README.md
+└── .gitignore
 ```
 
-## Data Privacy
+## Privacy Notice
 
-Raw images, videos, and datasets are not included in this repository because of privacy, licensing, and ethical restrictions.
+This project is developed for demonstration and academic purposes.
 
-Only anonymized or blurred demo screenshots will be shared for documentation purposes.
+Due to privacy and KVKK/GDPR-related concerns, raw passenger images, videos, and datasets are not included in this repository.
 
-The following folders and files should be ignored by Git:
+Any visual material used in documentation, GitHub screenshots, presentations, or reports must be anonymized. Passenger faces and personally identifiable areas should be blurred or masked before being shared publicly.
+
+Users who want to test the system should provide their own local video files or camera input.
+
+## Dataset Policy
+
+This repository does not include real passenger videos or images.
+
+Local test videos should be placed under:
 
 ```text
-dataset/
-datasets/
-videos/
-raw/
-weights/
-runs/
+data/private/videos/
 ```
 
-## Technologies
+Example:
 
-- Python
-- YOLO
-- OpenCV
-- PyTorch
-- NumPy
+```text
+data/private/videos/yolo_demogorsel_001.mp4
+```
 
-Tracking algorithms and more advanced decision mechanisms may be added in future versions.
+The `data/private/` directory is ignored by Git and should never be committed.
 
-## Status
+## Installation
 
-This project is currently in the planning stage.
+Clone the repository:
 
-The first milestone is to build a working demo that detects and counts passengers in images and videos.
+```bash
+git clone https://github.com/EmreBEYS/YOLO-Passenger-Counter.git
+cd YOLO-Passenger-Counter
+```
 
+Install dependencies:
+
+```bash
+pip install -r requirements.txt
+```
+
+## Requirements
+
+```txt
+ultralytics
+opencv-python
+pillow
+numpy
+```
+
+## Running Tests
+
+Counter and logger test:
+
+```bash
+python scripts/run_counter_logger_test.py
+```
+
+Video worker test:
+
+```bash
+python scripts/run_video_worker_test.py
+```
+
+## Usage
+
+Place your local video files inside:
+
+```text
+data/private/videos/
+```
+
+Then run the video worker test:
+
+```bash
+python scripts/run_video_worker_test.py
+```
+
+The system will:
+
+1. Open the selected local video file
+2. Detect people using YOLO
+3. Count detected passengers per frame
+4. Display detection boxes
+5. Save count logs into a CSV file
+
+## Output
+
+Passenger count logs are stored in:
+
+```text
+logs/passenger_log.csv
+```
+
+Example CSV format:
+
+```csv
+timestamp,source,entered,exited,inside,detected_count
+2026-09-10 20:30:12,yolo_demogorsel_001.mp4,0,0,3,3
+```
+
+## Roadmap
+
+### V1 - Demo
+
+- YOLO person detection
+- Local video processing
+- Passenger count display
+- CSV logging
+- Basic GUI
+
+### V2 - Tracking
+
+- Object tracking
+- Unique person ID handling
+- Entry/exit line counting
+- Duplicate count prevention
+
+### V3 - Dashboard
+
+- Live charts
+- Daily passenger count reports
+- Exportable logs
+- Improved user interface
+
+### V4 - Deployment
+
+- Camera stream support
+- Packaged desktop app
+- Performance optimization
+
+## Disclaimer
+
+This project is not intended to be used as a production surveillance system.
+
+It is an academic computer vision demo focused on passenger counting. Any real-world use must follow local privacy, data protection, and consent regulations.
