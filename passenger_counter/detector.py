@@ -30,8 +30,7 @@ class PassengerDetector:
     def __init__(self, config: AppConfig | None = None) -> None:
         self.config = config or AppConfig()
 
-        # İlk çalıştırmada yolov8n.pt otomatik indirilebilir.
-        self.model = YOLO(self.config.MODEL_NAME)
+        self.model = YOLO(str(self.config.MODEL_PATH))
 
     def detect(self, frame) -> List[DetectionBox]:
         """
@@ -43,6 +42,9 @@ class PassengerDetector:
         results = self.model(
             frame,
             conf=self.config.CONFIDENCE_THRESHOLD,
+            iou=self.config.IOU_THRESHOLD,
+            imgsz=self.config.INFERENCE_SIZE,
+            max_det=self.config.MAX_DETECTIONS,
             classes=[self.config.PERSON_CLASS_ID],
             verbose=False,
         )
@@ -76,7 +78,50 @@ class PassengerDetector:
                 )
             )
 
-        return detections
+        return self._remove_nested_duplicates(detections)
+
+    @staticmethod
+    def _remove_nested_duplicates(
+        detections: List[DetectionBox],
+    ) -> List[DetectionBox]:
+        """Remove small, lower-confidence boxes nested inside one person box."""
+        kept: List[DetectionBox] = []
+
+        def area(box: DetectionBox) -> int:
+            return max(0, box.x2 - box.x1) * max(0, box.y2 - box.y1)
+
+        for candidate in sorted(detections, key=area, reverse=True):
+            candidate_area = area(candidate)
+            if candidate_area == 0:
+                continue
+
+            is_duplicate = False
+            for existing in kept:
+                intersection_width = max(
+                    0,
+                    min(candidate.x2, existing.x2)
+                    - max(candidate.x1, existing.x1),
+                )
+                intersection_height = max(
+                    0,
+                    min(candidate.y2, existing.y2)
+                    - max(candidate.y1, existing.y1),
+                )
+                covered_ratio = (
+                    intersection_width * intersection_height / candidate_area
+                )
+
+                if (
+                    covered_ratio >= 0.80
+                    and candidate.confidence <= existing.confidence
+                ):
+                    is_duplicate = True
+                    break
+
+            if not is_duplicate:
+                kept.append(candidate)
+
+        return kept
 
     def draw_detections(self, frame, detections: List[DetectionBox]):
         """

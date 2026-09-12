@@ -39,74 +39,93 @@ class VideoWorker:
         self.status_callback = status_callback
         self.config = config or AppConfig()
 
-        self.detector = PassengerDetector(self.config)
-        self.counter = PassengerCounter()
-        self.logger = EventLogger(self.config)
+        self.detector: PassengerDetector
+        self.counter: PassengerCounter
+        self.logger: EventLogger
 
         self.running = False
+        self.stop_requested = False
         self.frame_index = 0
 
     def start(self) -> None:
-        """
-        Video işleme döngüsünü başlatır.
-        Bu fonksiyon ayrı thread içinde çalıştırılmalıdır.
-        """
-        self.running = True
-        self._send_status("Video worker başlatıldı.")
+        """Run video analysis. This method should execute in a worker thread."""
+        capture = None
+        try:
+            self._send_status("Loading YOLO model...")
+            self.detector = PassengerDetector(self.config)
+            self.counter = PassengerCounter()
+            self.logger = EventLogger(self.config)
 
-        cap = cv2.VideoCapture(str(self.source) if not isinstance(self.source, int) else self.source)
+            if self.stop_requested:
+                self._send_status("Analysis cancelled")
+                return
 
-        if not cap.isOpened():
-            self._send_status(f"Kaynak açılamadı: {self.source}")
-            self.running = False
-            return
+            self.running = True
+            self._send_status("Analysis started")
+            capture = cv2.VideoCapture(
+                str(self.source) if not isinstance(self.source, int) else self.source
+            )
 
-        source_name = self._get_source_name()
+            if not capture.isOpened():
+                self._send_status(f"Unable to open source: {self.source}")
+                return
 
-        while self.running:
-            ret, frame = cap.read()
+            source_name = self._get_source_name()
 
-            if not ret:
-                self._send_status("Video bitti veya frame okunamadı.")
-                break
+            while self.running:
+                success, frame = capture.read()
+                if not success:
+                    self._send_status("Video ended or the next frame could not be read")
+                    break
 
-            self.frame_index += 1
-
-            if self.config.FRAME_SKIP > 1:
-                if self.frame_index % self.config.FRAME_SKIP != 0:
+                self.frame_index += 1
+                if (
+                    self.config.FRAME_SKIP > 1
+                    and self.frame_index % self.config.FRAME_SKIP != 0
+                ):
                     continue
 
-            detections = self.detector.detect(frame)
-            result = self.counter.update(detections)
+                detections = self.detector.detect(frame)
+                result = self.counter.update(detections)
+                annotated_frame = self.detector.draw_detections(frame, detections)
+                self._draw_counter_info(annotated_frame, result)
 
-            annotated_frame = self.detector.draw_detections(frame, detections)
-            self._draw_counter_info(annotated_frame, result)
+                if self.frame_index % self.config.LOG_EVERY_N_FRAMES == 0:
+                    self.logger.write(source_name, result)
 
-            self.logger.write(source_name, result)
-
-            self.frame_callback(annotated_frame, result)
-
-            # CPU'yu gereksiz zorlamamak için küçük bekleme
-            time.sleep(0.001)
-
-        cap.release()
-        self.running = False
-        self._send_status("Video worker durdu.")
+                print(
+                    f"Frame: {self.frame_index} | "
+                    f"Passenger Count: {result.detected_count} | "
+                    f"Status: {result.density_status}"
+                )
+                self.frame_callback(annotated_frame, result)
+                time.sleep(0.001)
+        except Exception as error:
+            self._send_status(f"Analysis error: {error}")
+        finally:
+            if capture is not None:
+                capture.release()
+            self.running = False
+            self._send_status("Analysis stopped")
 
     def stop(self) -> None:
         """
         Video işleme döngüsünü durdurur.
         """
+        self.stop_requested = True
         self.running = False
-        self._send_status("Durdurma isteği gönderildi.")
+        self._send_status("Stop requested")
 
     def _draw_counter_info(self, frame, result: CounterResult) -> None:
         """
         Sayım bilgisini görüntünün üstüne yazar.
         """
-        text = f"Passengers: {result.detected_count} | Inside: {result.inside}"
+        text = (
+            f"Passengers: {result.detected_count} | "
+            f"Status: {result.density_status}"
+        )
 
-        cv2.rectangle(frame, (10, 10), (430, 60), (0, 0, 0), -1)
+        cv2.rectangle(frame, (10, 10), (590, 60), (0, 0, 0), -1)
 
         cv2.putText(
             frame,

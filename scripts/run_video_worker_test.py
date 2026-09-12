@@ -6,7 +6,6 @@ import cv2
 ROOT_DIR = Path(__file__).resolve().parents[1]
 sys.path.append(str(ROOT_DIR))
 
-from config import AppConfig
 from passenger_counter.video_worker import VideoWorker
 
 
@@ -37,27 +36,19 @@ def on_status(message: str) -> None:
 def main() -> None:
     global worker
 
-    config = AppConfig()
+    if len(sys.argv) != 2:
+        print("Kullanim: python scripts/run_video_worker_test.py <video_yolu>")
+        return
 
-    # Videolar data/private/videos klasöründe tutuluyor.
-    video_path = config.PRIVATE_VIDEO_DIR / "yolo_demogorsel_001.mp4"
-
-    if not video_path.exists():
-        print(f"Video bulunamadı: {video_path}")
-        print("Mevcut video klasörü:", config.PRIVATE_VIDEO_DIR)
-
-        if config.PRIVATE_VIDEO_DIR.exists():
-            print("Klasördeki dosyalar:")
-            for file in config.PRIVATE_VIDEO_DIR.iterdir():
-                print("-", file.name)
-
+    video_path = Path(sys.argv[1]).expanduser().resolve()
+    if not video_path.is_file():
+        print(f"Video bulunamadi: {video_path}")
         return
 
     worker = VideoWorker(
         source=video_path,
         frame_callback=on_frame,
         status_callback=on_status,
-        config=config,
     )
 
     worker.start()

@@ -1,207 +1,158 @@
 # YOLO Passenger Counter
 
-YOLO Passenger Counter is a lightweight computer vision demo project for detecting and counting passengers from local video or camera input.
+An academic desktop demonstration that detects and counts passengers from a local video or camera feed using a pretrained YOLO model.
 
-The project uses a YOLO-based object detection model to detect people in video frames and logs passenger count information into a CSV file. It is designed as an academic/demo project and can be extended with tracking, entry-exit line counting, dashboard visualization, and real-time camera support.
+## Final Project Status
+
+The planned Sprint 05-08 scope is complete.
+
+- Sprint 05: person detection, frame counting, density decisions and logging
+- Sprint 06: live analytics, change-based event log and CSV session reports
+- Sprint 07: stability improvements, controlled logging and automated checks
+- Sprint 08: final documentation, reproducible dependencies and delivery review
 
 ## Features
 
-- YOLO-based person detection
-- Local video input support
-- Basic passenger counting
-- CSV event logging
-- Simple Python project structure
-- Privacy-first dataset handling
-- Extendable architecture for future tracking and dashboard features
-
-## Current Status
-
-This repository currently contains the early V1 demo structure.
-
-Completed:
-
-- Project folder structure
-- Privacy-focused data layout
-- Basic passenger counter logic
-- CSV event logger
-- YOLO detector base
-- Video worker integration draft
-
-In Progress:
-
-- Video worker test
-- GUI integration with Tkinter
-
-Planned:
-
-- Real-time camera mode
-- Entry/exit line counting
-- Object tracking
-- Dashboard charts
-- Demo screenshots with anonymized faces
+- Pretrained YOLOv8s person detection; no custom training dataset required
+- Camera and local video selection
+- Bounding boxes and confidence scores
+- Current passenger count
+- Density classification:
+  - 0-10 passengers: Low Density
+  - 11-25 passengers: Medium Density
+  - 26 or more passengers: High Density
+- Nested duplicate-box filtering
+- Dark English dashboard
+- Live passenger-count chart
+- Processed-frame, peak-count and average-count statistics
+- Change-based event log
+- CSV event logging and exportable session summary
+- Background model loading to keep the interface responsive
+- Safe video-resource cleanup and visible error messages
 
 ## Project Structure
 
 ```text
 YOLO-Passenger-Counter/
-├── configs/
-├── data/
-│   └── private/
-│       ├── videos/
-│       └── images/
-├── demo/
-├── docs/
-│   └── screenshots/
 ├── logs/
 ├── passenger_counter/
 │   ├── __init__.py
 │   ├── counter.py
+│   ├── decision.py
 │   ├── detector.py
 │   ├── event_logger.py
 │   └── video_worker.py
 ├── scripts/
+│   ├── run_counter_logger_test.py
+│   └── run_video_worker_test.py
 ├── app.py
 ├── config.py
-├── README.md
 ├── requirements.txt
-└── .gitignore
+└── README.md
 ```
-
-## Privacy Notice
-
-This project is developed for demonstration and academic purposes.
-
-Due to privacy and KVKK/GDPR-related concerns, raw passenger images, videos, and datasets are not included in this repository.
-
-Any visual material used in documentation, GitHub screenshots, presentations, or reports must be anonymized. Passenger faces and personally identifiable areas should be blurred or masked before being shared publicly.
-
-Users who want to test the system should provide their own local video files or camera input.
-
-## Dataset Policy
-
-This repository does not include real passenger videos or images.
-
-Local test videos should be placed under:
-
-```text
-data/private/videos/
-```
-
-Example:
-
-```text
-data/private/videos/yolo_demogorsel_001.mp4
-```
-
-The `data/private/` directory is ignored by Git and should never be committed.
 
 ## Installation
 
-Clone the repository:
-
-```bash
-git clone https://github.com/EmreBEYS/YOLO-Passenger-Counter.git
-cd YOLO-Passenger-Counter
-```
-
-Install dependencies:
+Python 3.10 or newer is recommended.
 
 ```bash
 pip install -r requirements.txt
 ```
 
-## Requirements
+The application uses the pretrained `yolov8s.pt` model. Ultralytics may download the model automatically on its first run.
 
-```txt
-ultralytics
-opencv-python
-pillow
-numpy
+## Running the Application
+
+Run the project entry point from the repository root:
+
+```bash
+python app.py
 ```
 
-## Running Tests
+Do not run modules such as `passenger_counter/detector.py` directly. They are internal application components.
 
-Counter and logger test:
+Use `Camera` for the default camera or `Open Video` to select a local video file. Then select `Start Analysis`.
+
+## Session Report
+
+After an analysis session, open the `Event Log` tab and select `Export Session Report`. The generated CSV summary contains:
+
+- Source name
+- Session start and export timestamps
+- Processed frame count
+- Peak passenger count
+- Average passenger count
+- Final passenger count
+- Final density state
+
+## Automated Check
+
+Run:
 
 ```bash
 python scripts/run_counter_logger_test.py
 ```
 
-Video worker test:
+The script checks density boundaries, passenger counting, nested duplicate filtering and CSV event logging.
 
-```bash
-python scripts/run_video_worker_test.py
-```
+## Configuration
 
-## Usage
+Detection settings are defined in `config.py`. The final academic-demo defaults use:
 
-Place your local video files inside:
+- Model: YOLOv8s
+- Confidence threshold: 0.25
+- Inference image size: 960
+- IoU threshold: 0.45
+- Maximum detections per frame: 100
+- Persistent CSV log interval: every 10 processed frames
 
-```text
-data/private/videos/
-```
+These values provide a practical balance between accuracy and performance for crowded vehicle interiors.
 
-Then run the video worker test:
+## Academic Limitations
 
-```bash
-python scripts/run_video_worker_test.py
-```
+This application is a demonstration, not a production passenger-measurement or surveillance system. Results may vary because of:
 
-The system will:
+- Camera angle and lens distortion
+- Lighting and motion blur
+- Partial occlusion between passengers
+- Seats or objects that visually resemble people
+- The limitations of a general-purpose pretrained model
 
-1. Open the selected local video file
-2. Detect people using YOLO
-3. Count detected passengers per frame
-4. Display detection boxes
-5. Save count logs into a CSV file
+The current count represents people detected in each frame. Unique-person tracking and reliable physical entry/exit counting are not implemented; therefore the Entered and Exited values remain zero in this version.
 
-## Output
+## Privacy
 
-Passenger count logs are stored in:
-
-```text
-logs/passenger_log.csv
-```
-
-Example CSV format:
-
-```csv
-timestamp,source,entered,exited,inside,detected_count
-2026-09-10 20:30:12,yolo_demogorsel_001.mp4,0,0,3,3
-```
-
-## Roadmap
-
-### V1 - Demo
-
-- YOLO person detection
-- Local video processing
-- Passenger count display
-- CSV logging
-- Basic GUI
-
-### V2 - Tracking
-
-- Object tracking
-- Unique person ID handling
-- Entry/exit line counting
-- Duplicate count prevention
-
-### V3 - Dashboard
-
-- Live charts
-- Daily passenger count reports
-- Exportable logs
-- Improved user interface
-
-### V4 - Deployment
-
-- Camera stream support
-- Packaged desktop app
-- Performance optimization
+Only use footage that you are authorized to process. Faces and other personally identifiable areas must be blurred or masked before screenshots, reports or demonstrations are published. Raw passenger footage should not be committed to the repository.
 
 ## Disclaimer
 
-This project is not intended to be used as a production surveillance system.
+This project was developed for academic testing and demonstration purposes. Any real-world use must comply with applicable privacy, consent and data-protection requirements.
 
-It is an academic computer vision demo focused on passenger counting. Any real-world use must follow local privacy, data protection, and consent regulations.
+
+## Application Screenshots
+
+The following screenshots demonstrate the final academic dashboard. Passenger faces and other identifiable areas are anonymized where required.
+
+### Ready State
+
+The dashboard before a video or camera analysis begins.
+
+![Ready dashboard](<docs/screenshots/Ekran görüntüsü 2026-09-12 085733.png>)
+
+### Live Analytics — Light Occupancy
+
+A low-density analysis session with real-time passenger metrics and the live chart.
+
+![Light-occupancy live analytics](<docs/screenshots/Ekran görüntüsü 2026-09-12 085659.png>)
+
+### Live Analytics — Multiple Detections
+
+A passenger-detection example showing bounding boxes, confidence scores and session statistics.
+
+![Multiple passenger detections](<docs/screenshots/Ekran görüntüsü 2026-09-12 084331.png>)
+
+### Event Log and Report Export
+
+The event-log view records passenger-count and density changes and provides CSV report export.
+
+![Event log and report export](<docs/screenshots/Ekran görüntüsü 2026-09-12 085719.png>)
